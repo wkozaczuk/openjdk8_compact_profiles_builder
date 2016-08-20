@@ -1,0 +1,8 @@
+./make/common/NON_CORE_PKGS.gmk
+./make/common/JavaCompilation.gmk
+./make/common/CORE_PKGS.gmk
+./make/common/MakeBase.gmk
+./make/common/support/unicode2x.sed
+./make/common/support/ListPathsSafely-pre-compress.incl
+./make/common/support/ListPathsSafely-uncompress.sed
+./make/common/support/ListPathsSafely-post-compress.incl
