@@ -8,6 +8,7 @@
 ./make/Setup.gmk  
 ./make/Tools.gmk
 ./make/gensrc/GensrcMisc.gmk
+./make/gensrc/GensrcCLDR.gmk
 ./make/src/classes/build/tools/buildmetaindex/BuildMetaIndex.java
 ./make/src/classes/build/tools/jarreorder/JarReorder.java
 ./make/src/classes/build/tools/classfile/RemoveMethods.java
