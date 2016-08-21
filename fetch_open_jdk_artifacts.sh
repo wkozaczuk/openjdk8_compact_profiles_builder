@@ -35,8 +35,9 @@ cp /home/ubuntu/openjdk-8u/build/linux-x86_64-normal-server-release/images/j2sdk
 PLATFORM_NAME=linux-x86_64-normal-server-release
 cd $WORKING_DIR
 tar xfz j2sdk.tar.gz
+rm j2sdk.tar.gz
 mkdir -p build/$PLATFORM_NAME/jdk/classes
-cd build/#PLATFORM_NAME/jdk/classes/
+cd build/$PLATFORM_NAME/jdk/classes/
 jar -xf $WORKING_DIR/j2sdk-image/jre/lib/rt.jar
 jar -xf $WORKING_DIR/j2sdk-image/jre/lib/resources.jar
 rm sun/misc/Version.class
