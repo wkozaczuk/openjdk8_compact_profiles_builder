@@ -28,3 +28,18 @@ wget --no-host-directories --force-directories --cut-dirs=5 --base="http://hg.op
 cd $WORKING_DIR
 wget --no-host-directories --force-directories --cut-dirs=4 --base="http://hg.openjdk.java.net/jdk8u/jdk8u/raw-file/$ROOT_FOLDER_HG_REVISION/" \
      --input-file=$WORKING_DIR/../open_jdk_root_folder_files_to_fetch
+
+#TODO Replace with wget to fetch source openjdk 8 tar gz
+cp /home/ubuntu/openjdk-8u/build/linux-x86_64-normal-server-release/images/j2sdk.tar.gz $WORKING_DIR
+
+PLATFORM_NAME=linux-x86_64-normal-server-release
+cd $WORKING_DIR
+tar xfz j2sdk.tar.gz
+mkdir -p build/$PLATFORM_NAME/jdk/classes
+cd build/#PLATFORM_NAME/jdk/classes/
+jar -xf $WORKING_DIR/j2sdk-image/jre/lib/rt.jar
+jar -xf $WORKING_DIR/j2sdk-image/jre/lib/resources.jar
+rm sun/misc/Version.class
+
+mkdir -p $WORKING_DIR/build/$PLATFORM_NAME/langtools/dist/bootstrap/lib/
+cp $WORKING_DIR/j2sdk-image/lib/tools.jar $WORKING_DIR/build/$PLATFORM_NAME/langtools/dist/bootstrap/lib/javac.jar

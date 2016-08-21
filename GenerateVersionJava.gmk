@@ -1,0 +1,8 @@
+include $(SPEC)
+include ../../build/linux-x86_64-normal-server-release/spec.gmk
+include ../../make/common/MakeBase.gmk
+include ../../make/common/JavaCompilation.gmk
+include Setup.gmk
+
+include gensrc/GensrcMisc.gmk
+GENSRC += $(GENSRC_MISC)
