@@ -44,3 +44,7 @@ rm sun/misc/Version.class
 
 mkdir -p $WORKING_DIR/build/$PLATFORM_NAME/langtools/dist/bootstrap/lib/
 cp $WORKING_DIR/j2sdk-image/lib/tools.jar $WORKING_DIR/build/$PLATFORM_NAME/langtools/dist/bootstrap/lib/javac.jar
+
+mkdir -p $WORKING_DIR/build/$PLATFORM_NAME/images/lib/
+cp -rf $WORKING_DIR/j2sdk-image/jre/lib $WORKING_DIR/build/$PLATFORM_NAME/images
+cp -rf $WORKING_DIR/j2sdk-image/jre/bin $WORKING_DIR/build/$PLATFORM_NAME/jdk
