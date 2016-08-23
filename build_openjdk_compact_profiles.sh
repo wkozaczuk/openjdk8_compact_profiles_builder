@@ -19,15 +19,18 @@ touch $WORKING_DIR/build/$PLATFORM_NAME/jdk/btclasses/_the.BUILD_TOOLS_batch
 mkdir -p $WORKING_DIR/jdk/src/solaris/classes/sun/awt/X11/generator
 cd $WORKING_DIR/jdk/make
 make SPEC=$WORKING_DIR/build/$PLATFORM_NAME/spec.gmk PROFILE=profile_1 -I ../../make/common -f CreateJars.gmk $WORKING_DIR/build/$PLATFORM_NAME/images/libprofile_1/rt.jar
-#TODO Fugure out why META-INF/MANIFEST.MF differs
-#TODO Fugure out why sun/misc/Version.class differs
+#META-INF/MANIFEST.MF differs in order of elements
+#
+#sun/misc/Version.class in original build of JDK 8 compact profiles is of version 51 (Java 7) which seems to be wrong 
+#The one this script creates is version 52 (Java 8) which seems to be more correct as other classes are of 
+# bytecode version 52
 
 #Build resources.jar
 make SPEC=$WORKING_DIR/build/$PLATFORM_NAME/spec.gmk PROFILE=profile_1 -I ../../make/common -f CreateJars.gmk $WORKING_DIR/build/$PLATFORM_NAME/images/libprofile_1/resources.jar
-#TODO Fugure out why META-INF/MANIFEST.MF differs
+#TODO Fugure out why META-INF/MANIFEST.MF differs (same as above?)
 
 #Build compact JRE image
 touch $WORKING_DIR/build/$PLATFORM_NAME/source_tips #TODO FIGUURE how to create it 
 make SPEC=$WORKING_DIR/build/$PLATFORM_NAME/spec.gmk PROFILE=profile_1 -I ../../make/common -f Images.gmk JRE_IMAGE_DIR=$WORKING_DIR/build/$PLATFORM_NAME/images/j2re-compact1-image profile-image
 
-#TODO Figure out why lib/meta-index is wrong
+#It looks like lib/meta-index has same contenst as originally created one but differes in order
