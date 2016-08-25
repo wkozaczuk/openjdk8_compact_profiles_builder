@@ -1,8 +1,6 @@
 WORKING_DIR=`pwd $0`/work
 PLATFORM_NAME=linux-x86_64-normal-server-release
 
-cp spec.gmk $WORKING_DIR/build/$PLATFORM_NAME
-
 #Generate Version.java for each profile based on a souurce template
 cd $WORKING_DIR/jdk/make
 cp $WORKING_DIR/../GenerateVersionJava.gmk .
