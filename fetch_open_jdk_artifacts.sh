@@ -20,6 +20,7 @@ rm j2sdk.tar.gz
 
 #Run autoconf
 cp $WORKING_DIR/../configure.ac $WORKING_DIR/common/autoconf/configure.ac
+cp $WORKING_DIR/../linux_x64_binaries_extensions.m4 $WORKING_DIR/common/autoconf/linux_x64_binaries_extensions.m4
 cd $WORKING_DIR/common/autoconf
 autoconf configure.ac > configure
 chmod u+x configure

@@ -46,6 +46,7 @@ m4_include([help.m4])
 m4_include([jdk-options.m4])
 m4_include([platform.m4])
 m4_include([source-dirs.m4])
+m4_include([linux_x64_binaries_extensions.m4])
 
 AC_DEFUN_ONCE([CUSTOM_EARLY_HOOK])
 AC_DEFUN_ONCE([CUSTOM_LATE_HOOK])
@@ -144,6 +145,8 @@ SRCDIRS_SETUP_ALTERNATIVE_TOPDIRS
 SRCDIRS_SETUP_OUTPUT_DIRS
 
 BASIC_COMPILE_FIXPATH
+
+SETUP_BINARIES_EXTENSIONS
 
 ###############################################################################
 #
