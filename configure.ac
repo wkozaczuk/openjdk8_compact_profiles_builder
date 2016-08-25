@@ -143,6 +143,7 @@ SRCDIRS_SETUP_TOPDIRS
 SRCDIRS_SETUP_ALTERNATIVE_TOPDIRS
 SRCDIRS_SETUP_OUTPUT_DIRS
 
+BASIC_COMPILE_FIXPATH
 
 ###############################################################################
 #
