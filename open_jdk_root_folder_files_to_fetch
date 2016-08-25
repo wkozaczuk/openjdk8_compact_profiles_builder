@@ -9,6 +9,7 @@
 ./common/autoconf/Makefile.in
 ./common/autoconf/autogen.sh
 ./common/autoconf/basics.m4
+./common/autoconf/basics_windows.m4
 ./common/autoconf/boot-jdk.m4
 ./common/autoconf/bootcycle-spec.gmk.in
 ./common/autoconf/build-performance.m4
