@@ -18,8 +18,9 @@ WORKING_DIR=`pwd $0`/work
 rm -rf $WORKING_DIR
 
 # Fetch JDK using wget if URL starts with http otherwise assume local file and copy using cp
-mkdir -p $WORKING_DIR/jdk
-cd $WORKING_DIR/jdk
+BASE_JDK_MAGE_DIR=$WORKING_DIR/base_jdk_image
+mkdir -p $BASE_JDK_MAGE_DIR
+cd $BASE_JDK_MAGE_DIR
 JDK_DOWNLOAD_URL_PROTOCOL=`echo $JDK_DOWNLOAD_URL | grep -o '^http'`
 if [ "$JDK_DOWNLOAD_URL_PROTOCOL" == "http" ]; then
   wget $JDK_DOWNLOAD_URL
@@ -40,7 +41,7 @@ if [ ! -f "$JAVAC_FILE" ]; then
   echo "Extracted tarball does not have javac in it -> does not look like a JDK"
   exit 1
 fi
-JDK_DIRECTORY="$WORKING_DIR/jdk"/`dirname $JAVAC_FILE`"/.."
+JDK_DIRECTORY="$BASE_JDK_MAGE_DIR"/`dirname $JAVAC_FILE`"/.."
 echo "Identified source root JDK directory: $JDK_DIRECTORY"
 
 # Run java -version from the source JDK and capture output 
@@ -66,12 +67,15 @@ echo "Searching release revisions by $JDK_BUILD_TAG_SEARCH_STRING"
 wget http://hg.openjdk.java.net/jdk8u/jdk8u/tags -O root_jdk_tags
 ROOT_FOLDER_HG_REVISION=`tr "\n" " " < root_jdk_tags | grep -o "\w*\">\s*jdk8u$JDK_BUILD_TAG_SEARCH_STRING" | grep -o '^\w*'`
 echo "JDK root folder revision: "$ROOT_FOLDER_HG_REVISION
+rm root_jdk_tags
 
 wget http://hg.openjdk.java.net/jdk8u/jdk8u/jdk/tags -O jdk_jdk_tags
 JDK_FOLDER_HG_REVISION=`tr "\n" " " < jdk_jdk_tags | grep -o "\w*\">\s*jdk8u$JDK_BUILD_TAG_SEARCH_STRING" | grep -o '^\w*'`
 echo "JDK jdk folder revision: "$JDK_FOLDER_HG_REVISION
+rm jdk_jdk_tags
 
 # Fetch open JDK artifacts
+mkdir -p $WORKING_DIR/jdk
 cd $WORKING_DIR/jdk
 wget --no-host-directories --force-directories --cut-dirs=5 --base="http://hg.openjdk.java.net/jdk8u/jdk8u/jdk/raw-file/$JDK_FOLDER_HG_REVISION/" \
      --input-file=$WORKING_DIR/../open_jdk_jdk_folder_files_to_fetch
@@ -103,19 +107,21 @@ PLATFORM_NAME=linux-x86_64-normal-server-release
 cd $WORKING_DIR
 mkdir -p build/$PLATFORM_NAME
 cd $WORKING_DIR/build/$PLATFORM_NAME
-export PATH=$WORKING_DIR/j2sdk-image/bin:$PATH
+export PATH=$JDK_DIRECTORY/bin:$PATH
 $WORKING_DIR/common/autoconf/configure
 
+# Copy rt.jar, resources.jar from the source JDK and extract it
 cd $WORKING_DIR
 mkdir -p build/$PLATFORM_NAME/jdk/classes
 cd build/$PLATFORM_NAME/jdk/classes/
-jar -xf $WORKING_DIR/j2sdk-image/jre/lib/rt.jar
-jar -xf $WORKING_DIR/j2sdk-image/jre/lib/resources.jar
+jar -xf $JDK_DIRECTORY/jre/lib/rt.jar
+jar -xf $JDK_DIRECTORY/jre/lib/resources.jar
 rm sun/misc/Version.class
 
 mkdir -p $WORKING_DIR/build/$PLATFORM_NAME/langtools/dist/bootstrap/lib/
-cp $WORKING_DIR/j2sdk-image/lib/tools.jar $WORKING_DIR/build/$PLATFORM_NAME/langtools/dist/bootstrap/lib/javac.jar
+cp $JDK_DIRECTORY/lib/tools.jar $WORKING_DIR/build/$PLATFORM_NAME/langtools/dist/bootstrap/lib/javac.jar
 
+# Copy *.so and other artifacts from source JDK to the build subdirectories
 mkdir -p $WORKING_DIR/build/$PLATFORM_NAME/images/lib/
-cp -rf $WORKING_DIR/j2sdk-image/jre/lib $WORKING_DIR/build/$PLATFORM_NAME/images
-cp -rf $WORKING_DIR/j2sdk-image/jre/bin $WORKING_DIR/build/$PLATFORM_NAME/jdk
+cp -rf $JDK_DIRECTORY/jre/lib $WORKING_DIR/build/$PLATFORM_NAME/images
+cp -rf $JDK_DIRECTORY/jre/bin $WORKING_DIR/build/$PLATFORM_NAME/jdk
