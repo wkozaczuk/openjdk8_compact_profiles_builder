@@ -1,6 +1,42 @@
+#!/bin/bash
+JDK_DOWNLOAD_URL=$1
+JDK_PROFILE_NAME=$2
+
+# Validate parameters
+if [ -z "$JDK_DOWNLOAD_URL" ] || [ -z "$JDK_PROFILE_NAME" ]; then
+  echo "Usage: fetch_open_jdk_artifacts.sh <JDK_DOWNLOAD_URL> <JDK_PROFILE_NAME>"
+  exit 1
+fi
+
+if [ "$JDK_PROFILE_NAME" != "1" ] && [ "$JDK_PROFILE_NAME" != "2" ] && [ "$JDK_PROFILE_NAME" != "3" ]; then
+  echo "Usage: the profile name needs to be 1, 2 or 3"
+  exit 1
+fi
+
+# Clean up work directory if present
 WORKING_DIR=`pwd $0`/work
-JDK_FOLDER_HG_REVISION="48c99b423839"
-ROOT_FOLDER_HG_REVISION="daafd7d3a76a"
+rm -rf $WORKING_DIR
+
+# Fetch JDK using wget if URL starts with http otherwise assume local file and copy using cp
+mkdir -p $WORKING_DIR/jdk
+cd $WORKING_DIR/jdk
+if [ `echo $JDK_DOWNLOAD_URL | grep -o '^http'` == "http" ]; then
+  wget $JDK_DOWNLOAD_URL
+else
+  cp $JDK_DOWNLOAD_URL .
+fi
+
+
+
+
+
+wget http://hg.openjdk.java.net/jdk8u/jdk8u/tags > root_jdk_tags
+ROOT_FOLDER_HG_REVISION=`tr "\n" " " < root_jdk_tags | grep -o '\w*">\s*jdk8u60-b27' | grep -o '\w*'`
+echo "JDK root folder revision: "$ROOT_FOLDER_HG_REVISION
+
+wget http://hg.openjdk.java.net/jdk8u/jdk8u/jdk/tags > jdk_jdk_tags
+JDK_FOLDER_HG_REVISION=`tr "\n" " " < jdk_jdk_tags | grep -o '\w*">\s*jdk8u60-b27' | grep -o '\w*'`
+echo "JDK root folder revision: "$JDK_FOLDER_HG_REVISION
 
 mkdir -p $WORKING_DIR/jdk
 cd $WORKING_DIR/jdk
