@@ -20,25 +20,58 @@ rm -rf $WORKING_DIR
 # Fetch JDK using wget if URL starts with http otherwise assume local file and copy using cp
 mkdir -p $WORKING_DIR/jdk
 cd $WORKING_DIR/jdk
-if [ `echo $JDK_DOWNLOAD_URL | grep -o '^http'` == "http" ]; then
+JDK_DOWNLOAD_URL_PROTOCOL=`echo $JDK_DOWNLOAD_URL | grep -o '^http'`
+if [ "$JDK_DOWNLOAD_URL_PROTOCOL" == "http" ]; then
   wget $JDK_DOWNLOAD_URL
-else
+elif [ -f "$JDK_DOWNLOAD_URL" ]; then
   cp $JDK_DOWNLOAD_URL .
+else 
+  echo "The JDK download URL: $JDK_DOWNLOAD_URL is neither accesible through wget or can be copied locally"
 fi
 
+# Extract JDK tarball
+TARBALL=`find . -name \*tar.gz`
+tar xfz $TARBALL
+rm $TARBALL
 
+# Identify JDK directory root
+JAVAC_FILE=`find . -name javac`
+if [ ! -f "$JAVAC_FILE" ]; then
+  echo "Extracted tarball does not have javac in it -> does not look like a JDK"
+  exit 1
+fi
+JDK_DIRECTORY="$WORKING_DIR/jdk"/`dirname $JAVAC_FILE`"/.."
+echo "Identified source root JDK directory: $JDK_DIRECTORY"
 
+# Run java -version from the source JDK and capture output 
+$JDK_DIRECTORY/bin/java -version 2>&1 | head -n 2 | tail -n 1 | grep -o '(build.*)' > $WORKING_DIR/java_build.version
 
+# Identify all version parameters and replace in spec.gmk.in
+cd $WORKING_DIR
+JDK_MAJOR_VERSION=`cat java_build.version | sed -E 's/.*build ([0-9])\.([0-9])\.0_([0-9]*)-([^\s\)]+-)?([^\s\)]+).*/\1/'`
+JDK_MINOR_VERSION=`cat java_build.version | sed -E 's/.*build ([0-9])\.([0-9])\.0_([0-9]*)-([^\s\)]+-)?([^\s\)]+).*/\2/'`
+JDK_UPDATE_VERSION=`cat java_build.version | sed -E 's/.*build ([0-9])\.([0-9])\.0_([0-9]*)-([^\s\)]+-)?([^\s\)]+).*/\3/'`
+JDK_MILESTONE=`cat java_build.version | sed -E 's/.*build ([0-9])\.([0-9])\.0_([0-9]*)-([^\s\)]+-)?([^\s\)]+).*/\4/' | grep -o '[^-]*'`
+JDK_BUILD_NUMBER=`cat java_build.version | sed -E 's/.*build ([0-9])\.([0-9])\.0_([0-9]*)-([^\s\)]+-)?([^\s\)]+).*/\5/'`
+COOKED_JDK_UPDATE_VERSION=$JDK_UPDATE_VERSION"0"
 
-wget http://hg.openjdk.java.net/jdk8u/jdk8u/tags > root_jdk_tags
-ROOT_FOLDER_HG_REVISION=`tr "\n" " " < root_jdk_tags | grep -o '\w*">\s*jdk8u60-b27' | grep -o '\w*'`
+# Set milestone if empty
+if [ -z "$JDK_MILESTONE" ]; then
+  JDK_MILESTONE='fcs'
+fi
+
+JDK_BUILD_TAG_SEARCH_STRING="$JDK_UPDATE_VERSION-$JDK_BUILD_NUMBER"
+
+echo "Searching release revisions by $JDK_BUILD_TAG_SEARCH_STRING"
+wget http://hg.openjdk.java.net/jdk8u/jdk8u/tags -O root_jdk_tags
+ROOT_FOLDER_HG_REVISION=`tr "\n" " " < root_jdk_tags | grep -o "\w*\">\s*jdk8u$JDK_BUILD_TAG_SEARCH_STRING" | grep -o '^\w*'`
 echo "JDK root folder revision: "$ROOT_FOLDER_HG_REVISION
 
-wget http://hg.openjdk.java.net/jdk8u/jdk8u/jdk/tags > jdk_jdk_tags
-JDK_FOLDER_HG_REVISION=`tr "\n" " " < jdk_jdk_tags | grep -o '\w*">\s*jdk8u60-b27' | grep -o '\w*'`
-echo "JDK root folder revision: "$JDK_FOLDER_HG_REVISION
+wget http://hg.openjdk.java.net/jdk8u/jdk8u/jdk/tags -O jdk_jdk_tags
+JDK_FOLDER_HG_REVISION=`tr "\n" " " < jdk_jdk_tags | grep -o "\w*\">\s*jdk8u$JDK_BUILD_TAG_SEARCH_STRING" | grep -o '^\w*'`
+echo "JDK jdk folder revision: "$JDK_FOLDER_HG_REVISION
 
-mkdir -p $WORKING_DIR/jdk
+# Fetch open JDK artifacts
 cd $WORKING_DIR/jdk
 wget --no-host-directories --force-directories --cut-dirs=5 --base="http://hg.openjdk.java.net/jdk8u/jdk8u/jdk/raw-file/$JDK_FOLDER_HG_REVISION/" \
      --input-file=$WORKING_DIR/../open_jdk_jdk_folder_files_to_fetch
@@ -47,28 +80,7 @@ cd $WORKING_DIR
 wget --no-host-directories --force-directories --cut-dirs=4 --base="http://hg.openjdk.java.net/jdk8u/jdk8u/raw-file/$ROOT_FOLDER_HG_REVISION/" \
      --input-file=$WORKING_DIR/../open_jdk_root_folder_files_to_fetch
 
-#TODO Replace with wget to fetch source openjdk 8 tar gz
-cp /home/ubuntu/openjdk-8u/build/linux-x86_64-normal-server-release/images/j2sdk.tar.gz $WORKING_DIR
-
-cd $WORKING_DIR
-tar xfz j2sdk.tar.gz
-rm j2sdk.tar.gz
-
-#Run java -version from the source JDK and identify all parameters and replace in spec.gmk.in
-$WORKING_DIR/j2sdk-image/bin/java -version 2>&1 | head -n 2 | tail -n 1 | grep -o '(build.*)' > $WORKING_DIR/java_build.version
-
-JDK_MAJOR_VERSION=`cat java_build.version | sed -E 's/.*build ([0-9])\.([0-9])\.0_([0-9]*)-([^\s\)]+-)?([^\s\)]+).*/\1/'`
-JDK_MINOR_VERSION=`cat java_build.version | sed -E 's/.*build ([0-9])\.([0-9])\.0_([0-9]*)-([^\s\)]+-)?([^\s\)]+).*/\2/'`
-JDK_UPDATE_VERSION=`cat java_build.version | sed -E 's/.*build ([0-9])\.([0-9])\.0_([0-9]*)-([^\s\)]+-)?([^\s\)]+).*/\3/'`
-JDK_MILESTONE=`cat java_build.version | sed -E 's/.*build ([0-9])\.([0-9])\.0_([0-9]*)-([^\s\)]+-)?([^\s\)]+).*/\4/' | grep -o '[^-]*'`
-JDK_BUILD_NUMBER=`cat java_build.version | sed -E 's/.*build ([0-9])\.([0-9])\.0_([0-9]*)-([^\s\)]+-)?([^\s\)]+).*/\5/'`
-COOKED_JDK_UPDATE_VERSION=$JDK_UPDATE_VERSION"0"
-
-#Set milestone if empty
-if [ -z "$JDK_MILESTONE" ]; then
-  JDK_MILESTONE='fcs'
-fi
-
+# Replace version parameters in spec.gmk.in
 sed -i "s/@JDK_MAJOR_VERSION@/$JDK_MAJOR_VERSION/g" $WORKING_DIR/common/autoconf/spec.gmk.in
 sed -i "s/@JDK_MINOR_VERSION@/$JDK_MINOR_VERSION/g" $WORKING_DIR/common/autoconf/spec.gmk.in
 sed -i "s/@JDK_MICRO_VERSION@/0/g" $WORKING_DIR/common/autoconf/spec.gmk.in
@@ -79,14 +91,14 @@ sed -i "s/@JDK_VERSION@/$JDK_MAJOR_VERSION.$JDK_MINOR_VERSION.0_$JDK_UPDATE_VERS
 sed -i "s/@COOKED_JDK_UPDATE_VERSION@/$COOKED_JDK_UPDATE_VERSION/g" $WORKING_DIR/common/autoconf/spec.gmk.in
 sed -i "s/@USER_RELEASE_SUFFIX@//g" $WORKING_DIR/common/autoconf/spec.gmk.in
 
-#Run autoconf
+# Run autoconf
 cp $WORKING_DIR/../configure.ac $WORKING_DIR/common/autoconf/configure.ac
 cp $WORKING_DIR/../linux_x64_binaries_extensions.m4 $WORKING_DIR/common/autoconf/linux_x64_binaries_extensions.m4
 cd $WORKING_DIR/common/autoconf
 autoconf configure.ac > configure
 chmod u+x configure
 
-#Run generated configure 
+# Run generated configure 
 PLATFORM_NAME=linux-x86_64-normal-server-release
 cd $WORKING_DIR
 mkdir -p build/$PLATFORM_NAME
