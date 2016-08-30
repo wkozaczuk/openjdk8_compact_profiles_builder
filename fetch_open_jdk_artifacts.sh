@@ -64,12 +64,12 @@ fi
 JDK_BUILD_TAG_SEARCH_STRING="$JDK_UPDATE_VERSION-$JDK_BUILD_NUMBER"
 
 echo "Searching release revisions by $JDK_BUILD_TAG_SEARCH_STRING"
-wget http://hg.openjdk.java.net/jdk8u/jdk8u/tags -O root_jdk_tags
+wget -q http://hg.openjdk.java.net/jdk8u/jdk8u/tags -O root_jdk_tags
 ROOT_FOLDER_HG_REVISION=`tr "\n" " " < root_jdk_tags | grep -o "\w*\">\s*jdk8u$JDK_BUILD_TAG_SEARCH_STRING" | grep -o '^\w*'`
 echo "JDK root folder revision: "$ROOT_FOLDER_HG_REVISION
 rm root_jdk_tags
 
-wget http://hg.openjdk.java.net/jdk8u/jdk8u/jdk/tags -O jdk_jdk_tags
+wget -q http://hg.openjdk.java.net/jdk8u/jdk8u/jdk/tags -O jdk_jdk_tags
 JDK_FOLDER_HG_REVISION=`tr "\n" " " < jdk_jdk_tags | grep -o "\w*\">\s*jdk8u$JDK_BUILD_TAG_SEARCH_STRING" | grep -o '^\w*'`
 echo "JDK jdk folder revision: "$JDK_FOLDER_HG_REVISION
 rm jdk_jdk_tags
@@ -77,12 +77,14 @@ rm jdk_jdk_tags
 # Fetch open JDK artifacts
 mkdir -p $WORKING_DIR/jdk
 cd $WORKING_DIR/jdk
+echo "Downloading Open JDK artificats from http://hg.openjdk.java.net/jdk8u/jdk8u/jdk based on the list in open_jdk_jdk_folder_files_to_fetch"
 wget --no-host-directories --force-directories --cut-dirs=5 --base="http://hg.openjdk.java.net/jdk8u/jdk8u/jdk/raw-file/$JDK_FOLDER_HG_REVISION/" \
-     --input-file=$WORKING_DIR/../open_jdk_jdk_folder_files_to_fetch
+     --input-file=$WORKING_DIR/../open_jdk_jdk_folder_files_to_fetch -o open_jdk_jdk_folder_files_to_fetch.log
 
 cd $WORKING_DIR
+echo "Downloading Open JDK artificats from http://hg.openjdk.java.net/jdk8u/jdk8u based on the list in open_jdk_root_folder_files_to_fetch"
 wget --no-host-directories --force-directories --cut-dirs=4 --base="http://hg.openjdk.java.net/jdk8u/jdk8u/raw-file/$ROOT_FOLDER_HG_REVISION/" \
-     --input-file=$WORKING_DIR/../open_jdk_root_folder_files_to_fetch
+     --input-file=$WORKING_DIR/../open_jdk_root_folder_files_to_fetch -o open_jdk_root_folder_files_to_fetch.log
 
 # Replace version parameters in spec.gmk.in
 sed -i "s/@JDK_MAJOR_VERSION@/$JDK_MAJOR_VERSION/g" $WORKING_DIR/common/autoconf/spec.gmk.in
