@@ -18,6 +18,23 @@ cd $WORKING_DIR
 tar xfz j2sdk.tar.gz
 rm j2sdk.tar.gz
 
+#Run java -version from the source JDK and identify all parameters and replace in spec.gmk.in
+$WORKING_DIR/j2sdk-image/bin/java -version 2>&1 | head -n 2 | tail -n 1 | grep -o '(build.*)' > $WORKING_DIR/java_build.version
+
+JDK_MAJOR_VERSION=`cat java_build.version | sed -E 's/.*build ([0-9])\.([0-9])\.0_([0-9]*)-([^\s\)]+).*/\1/'`
+JDK_MINOR_VERSION=`cat java_build.version | sed -E 's/.*build ([0-9])\.([0-9])\.0_([0-9]*)-([^\s\)]+).*/\2/'`
+JDK_UPDATE_VERSION=`cat java_build.version | sed -E 's/.*build ([0-9])\.([0-9])\.0_([0-9]*)-([^\s\)]+).*/\3/'`
+JDK_BUILD_NUMBER=`cat java_build.version | sed -E 's/.*build ([0-9])\.([0-9])\.0_([0-9]*)-([^\s\)]+).*/\4/'`
+
+sed -i "s/@JDK_MAJOR_VERSION@/$JDK_MAJOR_VERSION/g" $WORKING_DIR/common/autoconf/spec.gmk.in
+sed -i "s/@JDK_MINOR_VERSION@/$JDK_MINOR_VERSION/g" $WORKING_DIR/common/autoconf/spec.gmk.in
+sed -i "s/@JDK_MICRO_VERSION@/0/g" $WORKING_DIR/common/autoconf/spec.gmk.in
+sed -i "s/@JDK_UPDATE_VERSION@/$JDK_UPDATE_VERSION/g" $WORKING_DIR/common/autoconf/spec.gmk.in
+sed -i "s/@JDK_BUILD_NUMBER@/$JDK_BUILD_NUMBER/g" $WORKING_DIR/common/autoconf/spec.gmk.in
+sed -i "s/@MILESTONE@/fcs/g" $WORKING_DIR/common/autoconf/spec.gmk.in
+sed -i "s/@JDK_VERSION@/$JDK_MAJOR_VERSION.$JDK_MINOR_VERSION.0_$JDK_UPDATE_VERSION/g" $WORKING_DIR/common/autoconf/spec.gmk.in
+sed -i "s/@COOKED_JDK_UPDATE_VERSION@/$JDK_UPDATE_VERSION0/g" $WORKING_DIR/common/autoconf/spec.gmk.in
+
 #Run autoconf
 cp $WORKING_DIR/../configure.ac $WORKING_DIR/common/autoconf/configure.ac
 cp $WORKING_DIR/../linux_x64_binaries_extensions.m4 $WORKING_DIR/common/autoconf/linux_x64_binaries_extensions.m4
