@@ -23,7 +23,7 @@ mkdir -p $BASE_JDK_MAGE_DIR
 cd $BASE_JDK_MAGE_DIR
 JDK_DOWNLOAD_URL_PROTOCOL=`echo $JDK_DOWNLOAD_URL | grep -o '^http'`
 if [ "$JDK_DOWNLOAD_URL_PROTOCOL" == "http" ]; then
-  wget $JDK_DOWNLOAD_URL
+  wget --no-cookies --no-check-certificate --header "Cookie:oraclelicense=accept-securebackup-cookie" $JDK_DOWNLOAD_URL
 elif [ -f "$JDK_DOWNLOAD_URL" ]; then
   cp $JDK_DOWNLOAD_URL .
 else 
