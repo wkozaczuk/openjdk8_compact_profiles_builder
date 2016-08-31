@@ -147,7 +147,7 @@ touch $WORKING_DIR/build/$PLATFORM_NAME/jdk/btclasses/_the.BUILD_TOOLS_batch
 # Build rt.jar 
 mkdir -p $WORKING_DIR/jdk/src/solaris/classes/sun/awt/X11/generator
 cd $WORKING_DIR/jdk/make
-make SPEC=$WORKING_DIR/build/$PLATFORM_NAME/spec.gmk PROFILE=profile_$JDK_PROFILE_NUMBER -I ../../make/common -f CreateJars.gmk \
+make ALL_FILES_IN_CLASSES="" SPEC=$WORKING_DIR/build/$PLATFORM_NAME/spec.gmk PROFILE=profile_$JDK_PROFILE_NUMBER -I ../../make/common -f CreateJars.gmk \
  $WORKING_DIR/build/$PLATFORM_NAME/images/libprofile_$JDK_PROFILE_NUMBER/rt.jar
 #META-INF/MANIFEST.MF differs in order of elements
 #
@@ -156,7 +156,7 @@ make SPEC=$WORKING_DIR/build/$PLATFORM_NAME/spec.gmk PROFILE=profile_$JDK_PROFIL
 # bytecode version 52
 
 # Build resources.jar
-make SPEC=$WORKING_DIR/build/$PLATFORM_NAME/spec.gmk PROFILE=profile_$JDK_PROFILE_NUMBER -I ../../make/common -f CreateJars.gmk \
+make ALL_FILES_IN_CLASSES="" SPEC=$WORKING_DIR/build/$PLATFORM_NAME/spec.gmk PROFILE=profile_$JDK_PROFILE_NUMBER -I ../../make/common -f CreateJars.gmk \
   $WORKING_DIR/build/$PLATFORM_NAME/images/libprofile_$JDK_PROFILE_NUMBER/resources.jar
 #TODO Figure out why META-INF/MANIFEST.MF differs (same as above?)
 
