@@ -1,14 +1,14 @@
 #!/bin/bash
 JDK_DOWNLOAD_URL=$1
-JDK_PROFILE_NAME=$2
+JDK_PROFILE_NUMBER=$2
 
 # Validate parameters
-if [ -z "$JDK_DOWNLOAD_URL" ] || [ -z "$JDK_PROFILE_NAME" ]; then
-  echo "Usage: fetch_open_jdk_artifacts.sh <JDK_DOWNLOAD_URL> <JDK_PROFILE_NAME>"
+if [ -z "$JDK_DOWNLOAD_URL" ] || [ -z "$JDK_PROFILE_NUMBER" ]; then
+  echo "Usage: fetch_open_jdk_artifacts.sh <JDK_DOWNLOAD_URL> <JDK_PROFILE_NUMBER>"
   exit 1
 fi
 
-if [ "$JDK_PROFILE_NAME" != "1" ] && [ "$JDK_PROFILE_NAME" != "2" ] && [ "$JDK_PROFILE_NAME" != "3" ]; then
+if [ "$JDK_PROFILE_NUMBER" != "1" ] && [ "$JDK_PROFILE_NUMBER" != "2" ] && [ "$JDK_PROFILE_NUMBER" != "3" ]; then
   echo "Usage: the profile name needs to be 1, 2 or 3"
   exit 1
 fi
@@ -87,6 +87,7 @@ wget --no-host-directories --force-directories --cut-dirs=4 --base="http://hg.op
      --input-file=$WORKING_DIR/../open_jdk_root_folder_files_to_fetch -o open_jdk_root_folder_files_to_fetch.log
 
 # Replace version parameters in spec.gmk.in
+echo "Setting up JDK version parameters"
 sed -i "s/@JDK_MAJOR_VERSION@/$JDK_MAJOR_VERSION/g" $WORKING_DIR/common/autoconf/spec.gmk.in
 sed -i "s/@JDK_MINOR_VERSION@/$JDK_MINOR_VERSION/g" $WORKING_DIR/common/autoconf/spec.gmk.in
 sed -i "s/@JDK_MICRO_VERSION@/0/g" $WORKING_DIR/common/autoconf/spec.gmk.in
@@ -98,6 +99,7 @@ sed -i "s/@COOKED_JDK_UPDATE_VERSION@/$COOKED_JDK_UPDATE_VERSION/g" $WORKING_DIR
 sed -i "s/@USER_RELEASE_SUFFIX@//g" $WORKING_DIR/common/autoconf/spec.gmk.in
 
 # Run autoconf
+echo "Running autoconf to generate configure for this platform"
 cp $WORKING_DIR/../configure.ac $WORKING_DIR/common/autoconf/configure.ac
 cp $WORKING_DIR/../linux_x64_binaries_extensions.m4 $WORKING_DIR/common/autoconf/linux_x64_binaries_extensions.m4
 cd $WORKING_DIR/common/autoconf
@@ -105,14 +107,16 @@ autoconf configure.ac > configure
 chmod u+x configure
 
 # Run generated configure 
+echo "Executing configure"
 PLATFORM_NAME=linux-x86_64-normal-server-release
 cd $WORKING_DIR
 mkdir -p build/$PLATFORM_NAME
 cd $WORKING_DIR/build/$PLATFORM_NAME
 export PATH=$JDK_DIRECTORY/bin:$PATH
-$WORKING_DIR/common/autoconf/configure
+$WORKING_DIR/common/autoconf/configure > $WORKING_DIR/configure.log
 
 # Copy rt.jar, resources.jar from the source JDK and extract it
+echo "Extracting rt.jar, resources.jar and copying all binaries from base JDK base into build subdirectories"
 cd $WORKING_DIR
 mkdir -p build/$PLATFORM_NAME/jdk/classes
 cd build/$PLATFORM_NAME/jdk/classes/
@@ -127,3 +131,39 @@ cp $JDK_DIRECTORY/lib/tools.jar $WORKING_DIR/build/$PLATFORM_NAME/langtools/dist
 mkdir -p $WORKING_DIR/build/$PLATFORM_NAME/images/lib/
 cp -rf $JDK_DIRECTORY/jre/lib $WORKING_DIR/build/$PLATFORM_NAME/images
 cp -rf $JDK_DIRECTORY/jre/bin $WORKING_DIR/build/$PLATFORM_NAME/jdk
+
+# Generate Version.java for each profile based on a source template
+cd $WORKING_DIR/jdk/make
+cp $WORKING_DIR/../GenerateVersionJava.gmk .
+make -f GenerateVersionJava.gmk $WORKING_DIR/build/$PLATFORM_NAME/jdk/gen_profile_1/sun/misc/Version.java
+make -f GenerateVersionJava.gmk $WORKING_DIR/build/$PLATFORM_NAME/jdk/gen_profile_2/sun/misc/Version.java
+make -f GenerateVersionJava.gmk $WORKING_DIR/build/$PLATFORM_NAME/jdk/gen_profile_3/sun/misc/Version.java
+
+# Compile 5 BUILD tool classes
+mkdir -p $WORKING_DIR/build/$PLATFORM_NAME/jdk/btclasses
+$JDK_DIRECTORY/bin/javac -classpath $JDK_DIRECTORY/lib/tools.jar -d $WORKING_DIR/build/$PLATFORM_NAME/jdk/btclasses $(find $WORKING_DIR/jdk/make/src/classes  -name "*.java")
+touch $WORKING_DIR/build/$PLATFORM_NAME/jdk/btclasses/_the.BUILD_TOOLS_batch
+
+# Build rt.jar 
+mkdir -p $WORKING_DIR/jdk/src/solaris/classes/sun/awt/X11/generator
+cd $WORKING_DIR/jdk/make
+make SPEC=$WORKING_DIR/build/$PLATFORM_NAME/spec.gmk PROFILE=profile_$JDK_PROFILE_NUMBER -I ../../make/common -f CreateJars.gmk \
+ $WORKING_DIR/build/$PLATFORM_NAME/images/libprofile_$JDK_PROFILE_NUMBER/rt.jar
+#META-INF/MANIFEST.MF differs in order of elements
+#
+#sun/misc/Version.class in original build of JDK 8 compact profiles is of version 51 (Java 7) which seems to be wrong 
+#The one this script creates is version 52 (Java 8) which seems to be more correct as other classes are of 
+# bytecode version 52
+
+# Build resources.jar
+make SPEC=$WORKING_DIR/build/$PLATFORM_NAME/spec.gmk PROFILE=profile_$JDK_PROFILE_NUMBER -I ../../make/common -f CreateJars.gmk \
+  $WORKING_DIR/build/$PLATFORM_NAME/images/libprofile_$JDK_PROFILE_NUMBER/resources.jar
+#TODO Figure out why META-INF/MANIFEST.MF differs (same as above?)
+
+# Build compact JRE image
+touch $WORKING_DIR/build/$PLATFORM_NAME/source_tips #TODO FIGUURE how to create it 
+make SPEC=$WORKING_DIR/build/$PLATFORM_NAME/spec.gmk PROFILE=profile_$JDK_PROFILE_NUMBER -I ../../make/common -f Images.gmk \
+  JRE_IMAGE_DIR=$WORKING_DIR/build/$PLATFORM_NAME/images/j2re-compact$JDK_PROFILE_NUMBER-image profile-image
+
+# It looks like lib/meta-index has same content as originally created one but differs in order
+echo "Created profile image under $WORKING_DIR/build/$PLATFORM_NAME/images/j2re-compact$JDK_PROFILE_NUMBER-image"
