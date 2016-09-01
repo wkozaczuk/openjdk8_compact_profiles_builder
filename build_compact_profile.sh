@@ -4,7 +4,7 @@ JDK_PROFILE_NUMBER=$2
 
 # Validate parameters
 if [ -z "$JDK_DOWNLOAD_URL" ] || [ -z "$JDK_PROFILE_NUMBER" ]; then
-  echo "Usage: fetch_open_jdk_artifacts.sh <JDK_DOWNLOAD_URL> <JDK_PROFILE_NUMBER>"
+  echo "Usage: build_compact_profile.sh <JDK_DOWNLOAD_URL> <JDK_PROFILE_NUMBER>"
   exit 1
 fi
 
