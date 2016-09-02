@@ -11,7 +11,7 @@ More about compact profiles:
 * http://www.oracle.com/technetwork/java/embedded/resources/tech/compact-profiles-overview-2157132.html
 
 ## Usage
-build_compact_profile.sh <JDK_DOWNLOAD_URL> <JDK_PROFILE_NUMBER>
+```build_compact_profile.sh <JDK_DOWNLOAD_URL> <JDK_PROFILE_NUMBER>```
 ##### Examples:
 * ./build_compact_profile.sh http://download.oracle.com/otn-pub/java/jdk/8u101-b13/jdk-8u101-linux-x64.tar.gz 1
 * ./build_compact_profile.sh http://cdn.azul.com/zulu/bin/zulu8.17.0.3-jdk8.0.102-linux_x64.tar.gz 3
