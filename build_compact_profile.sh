@@ -1,10 +1,11 @@
 #!/bin/bash
 JDK_DOWNLOAD_URL=$1
 JDK_PROFILE_NUMBER=$2
+JDK_ADD_JAVA_BEANS=$3
 
 # Validate parameters
 if [ -z "$JDK_DOWNLOAD_URL" ] || [ -z "$JDK_PROFILE_NUMBER" ]; then
-  echo "Usage: build_compact_profile.sh <JDK_DOWNLOAD_URL> <JDK_PROFILE_NUMBER>"
+  echo "Usage: build_compact_profile.sh <JDK_DOWNLOAD_URL> <JDK_PROFILE_NUMBER> [add_java_beans]"
   exit 1
 fi
 
@@ -162,8 +163,26 @@ make ALL_FILES_IN_CLASSES="" SPEC=$WORKING_DIR/build/$PLATFORM_NAME/spec.gmk PRO
 
 # Build compact JRE image
 touch $WORKING_DIR/build/$PLATFORM_NAME/source_tips #TODO FIGUURE how to create it 
+IMAGE_BASEDIR=$WORKING_DIR/build/$PLATFORM_NAME/images
+IMAGE_DIR=$IMAGE_BASEDIR/j2re-compact$JDK_PROFILE_NUMBER-image
 make SPEC=$WORKING_DIR/build/$PLATFORM_NAME/spec.gmk PROFILE=profile_$JDK_PROFILE_NUMBER -I ../../make/common -f Images.gmk \
-  JRE_IMAGE_DIR=$WORKING_DIR/build/$PLATFORM_NAME/images/j2re-compact$JDK_PROFILE_NUMBER-image profile-image
+  JRE_IMAGE_DIR=$IMAGE_DIR profile-image
+
+# Add java/beans and sun/ if JDK_ADD_JAVA_BEANS=add_java_beans
+if [ "$JDK_ADD_JAVA_BEANS" == "add_java_beans" ]; then
+  echo "Adding java/beans/* and com/sun/beans/* to lib/rt.jar, updating de-beaned classes with regular ones and updating lib/meta-index"
+  jar uf $IMAGE_DIR/lib/rt.jar -C $WORKING_DIR/build/$PLATFORM_NAME/jdk/classes com/sun/beans
+  jar uf $IMAGE_DIR/lib/rt.jar -C $WORKING_DIR/build/$PLATFORM_NAME/jdk/classes java/beans
+  jar uf $IMAGE_DIR/lib/rt.jar -C $WORKING_DIR/build/$PLATFORM_NAME/jdk/classes java/util/logging/LogManager.class
+  jar uf $IMAGE_DIR/lib/rt.jar -C $WORKING_DIR/build/$PLATFORM_NAME/jdk/classes java/util/jar/Pack200\$Packer.class
+  jar uf $IMAGE_DIR/lib/rt.jar -C $WORKING_DIR/build/$PLATFORM_NAME/jdk/classes java/util/jar/Pack200\$Unpacker.class
+  jar uf $IMAGE_DIR/lib/rt.jar -C $WORKING_DIR/build/$PLATFORM_NAME/jdk/classes com/sun/java/util/jar/pack/PackerImpl.class
+  jar uf $IMAGE_DIR/lib/rt.jar -C $WORKING_DIR/build/$PLATFORM_NAME/jdk/classes com/sun/java/util/jar/pack/UnpackerImpl.class
+  echo "com/sun/beans/" >> $IMAGE_DIR/lib/meta-index
+  NEW_IMAGE_DIR=$IMAGE_BASEDIR/j2re-compact$JDK_PROFILE_NUMBER-with-java-beans-image
+  mv $IMAGE_DIR $NEW_IMAGE_DIR
+  IMAGE_DIR=$NEW_IMAGE_DIR
+fi
 
 # It looks like lib/meta-index has same content as originally created one but differs in order
-echo "Created profile image under $WORKING_DIR/build/$PLATFORM_NAME/images/j2re-compact$JDK_PROFILE_NUMBER-image"
+echo "Created profile image under $IMAGE_DIR"
