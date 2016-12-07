@@ -11,10 +11,11 @@ More about compact profiles:
 * http://www.oracle.com/technetwork/java/embedded/resources/tech/compact-profiles-overview-2157132.html
 
 ## Usage
-```build_compact_profile.sh <JDK_DOWNLOAD_URL> <JDK_PROFILE_NUMBER>```
+```build_compact_profile.sh <JDK_DOWNLOAD_URL> <JDK_PROFILE_NUMBER> <<add_java_beans>>```
 ##### Examples:
 * ./build_compact_profile.sh http://download.oracle.com/otn-pub/java/jdk/8u101-b13/jdk-8u101-linux-x64.tar.gz 1
 * ./build_compact_profile.sh http://cdn.azul.com/zulu/bin/zulu8.17.0.3-jdk8.0.102-linux_x64.tar.gz 3
+* ./build_compact_profile.sh http://cdn.azul.com/zulu/bin/zulu8.17.0.3-jdk8.0.102-linux_x64.tar.gz 3 add_java_beans
  
 ## Background
 Open JDK build process involves compiling C source code that comprises the JVM runtime as well as Java source code that makes up content of rt.jar, resources.jar and other standard JRE and JDK jars. It is based on set of make files (Makefile, *.gmk files) and standard m4 and autoconf template files. The default make target produces regular (aka full) JRE and JDK images.The profiles target on other hand creates corresponding compact profile images by essentially repackaging original binaries based on profile-includes.txt and creating corresponding rt.jar and resources.jar based on profile-rtjar-includes.txt. In short one can make an observation that it should be possible to take regular JRE, extract its content and rt.jar and resources.jar and follow same steps that are part of the profiles target to create compact profile JRE without a need to compile any C nor Java code with some exceptions.
@@ -27,9 +28,9 @@ Step by step (simplified):
 * Fetch all necessary OpenJDK make files as well as Java source code of 4 tool programs from http://hg.openjdk.java.net/jdk8u/jdk8u/
 * Run autoconf to produce spec.gmk and configure
 * Run make targets to create rt.jar and resources.jar and eventually target image
+* Optionally add java.beans to the rt.jar if add_java_beans specified
 
 ## TODO LIST ##
 * Add more error checks to both scripts
 * Change build script to determine PLATFORM_NAME from spec.gmk (CONF_NAME value or simply location of generated spec.gmk under work folder)
-* Add ability to generate profile 3 with java beans
 * Investigate what it would take to add ability to generate custom compact profiles

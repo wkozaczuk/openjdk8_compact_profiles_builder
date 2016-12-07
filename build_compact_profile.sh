@@ -19,22 +19,24 @@ WORKING_DIR=`pwd $0`/work
 rm -rf $WORKING_DIR
 
 # Fetch JDK using wget if URL starts with http otherwise assume local file and copy using cp
-BASE_JDK_MAGE_DIR=$WORKING_DIR/base_jdk_image
-mkdir -p $BASE_JDK_MAGE_DIR
-cd $BASE_JDK_MAGE_DIR
+JDK_DOWNLOAD_DIR=`pwd $0`/jdk_downloads
+mkdir -p $JDK_DOWNLOAD_DIR
+cd $JDK_DOWNLOAD_DIR
 JDK_DOWNLOAD_URL_PROTOCOL=`echo $JDK_DOWNLOAD_URL | grep -o '^http'`
 if [ "$JDK_DOWNLOAD_URL_PROTOCOL" == "http" ]; then
-  wget --no-cookies --no-check-certificate --header "Cookie:oraclelicense=accept-securebackup-cookie" $JDK_DOWNLOAD_URL
+  wget -c --no-cookies --no-check-certificate --header "Cookie:oraclelicense=accept-securebackup-cookie" $JDK_DOWNLOAD_URL
 elif [ -f "$JDK_DOWNLOAD_URL" ]; then
   cp $JDK_DOWNLOAD_URL .
 else 
   echo "The JDK download URL: $JDK_DOWNLOAD_URL is neither accesible through wget or can be copied locally"
 fi
 
-# Extract JDK tarball
-TARBALL=`find . -name \*tar.gz`
+# Extract JDK tarball (assumes tari )
+BASE_JDK_IMAGE_DIR=$WORKING_DIR/base_jdk_image
+mkdir -p $BASE_JDK_IMAGE_DIR
+cd $BASE_JDK_IMAGE_DIR
+TARBALL=`find $JDK_DOWNLOAD_DIR -name \*tar.gz`
 tar xfz $TARBALL
-rm $TARBALL
 
 # Identify JDK directory root
 JAVAC_FILE=`find . -name javac`
@@ -42,7 +44,7 @@ if [ ! -f "$JAVAC_FILE" ]; then
   echo "Extracted tarball does not have javac in it -> does not look like a JDK"
   exit 1
 fi
-JDK_DIRECTORY="$BASE_JDK_MAGE_DIR"/`dirname $JAVAC_FILE`"/.."
+JDK_DIRECTORY="$BASE_JDK_IMAGE_DIR"/`dirname $JAVAC_FILE`"/.."
 echo "Identified source root JDK directory: $JDK_DIRECTORY"
 
 # Run java -version from the source JDK and capture output 
