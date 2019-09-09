@@ -121,7 +121,7 @@ cd $WORKING_DIR
 mkdir -p build/$PLATFORM_NAME
 cd $WORKING_DIR/build/$PLATFORM_NAME
 export PATH=$JDK_DIRECTORY/bin:$PATH
-$WORKING_DIR/common/autoconf/configure > $WORKING_DIR/configure.log
+TOPDIR=$WORKING_DIR $WORKING_DIR/common/autoconf/configure > $WORKING_DIR/configure.log
 
 # Copy rt.jar, resources.jar from the source JDK and extract it
 echo "Extracting rt.jar, resources.jar and copying all binaries from base JDK base into build subdirectories"
